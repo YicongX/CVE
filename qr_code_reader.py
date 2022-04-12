@@ -35,10 +35,10 @@ def get_qr_coords(cmtx, dist, points):
         print("[Roll, Pitch, Yaw]:")
         print(rpy, '\n')
         
-        return points, rvec, tvec, euler, homoMatrix
+        return points
 
     # return empty arrays if rotation and translation values not found
-    else: return [], [], [], [], []
+    else: return []
 
 
 def show_axes(cmtx, dist, img):
@@ -48,7 +48,7 @@ def show_axes(cmtx, dist, img):
 
     if ret_qr:
         # axis point projects 3D coordinate points to a 2D plane
-        axis_points, rvec, tvec, pose, homoMatrix = get_qr_coords(cmtx, dist, points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
+        axis_points = get_qr_coords(cmtx, dist, points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
 
         # BGR color format
         colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0,0,0)]
