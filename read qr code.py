@@ -45,46 +45,46 @@ def get_qr_coords(cmtx, dist, points):
     else: return [], [], []
 
 
-def show_axes(cmtx, dist, cap):
+def show_axes(cmtx, dist, img):
     #cap = cv.VideoCapture(in_source)
 
     qr = cv.QRCodeDetector()
 
-    while True:
-        ret, img = cap.read()
-        if ret == False: break
+    #while True:
+    #    ret, img = cap.read()
+    #    if ret == False: break
 
-        ret_qr, points = qr.detect(img)
+    ret_qr, points = qr.detect(img)
 
-        if ret_qr:
-            axis_points, rvec, tvec, pose, homoMatrix = get_qr_coords(cmtx, dist, points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
-            # axis point = coordinate 3D point project to 2D plane
+    if ret_qr:
+        axis_points, rvec, tvec, pose, homoMatrix = get_qr_coords(cmtx, dist, points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
+        # axis point = coordinate 3D point project to 2D plane
 
-            # BGR color format
-            colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0,0,0)]
+        # BGR color format
+        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0,0,0)]
 
-            # check axes points are projected to camera view.
-            if len(axis_points) > 0:
-                axis_points = axis_points.reshape((4,2))
+        # check axes points are projected to camera view.
+        if len(axis_points) > 0:
+            axis_points = axis_points.reshape((4,2))
 
-                origin = (int(axis_points[0][0]),int(axis_points[0][1]) )
+            origin = (int(axis_points[0][0]),int(axis_points[0][1]) )
 
-                for p, c in zip(axis_points[1:], colors[:3]):
-                    p = (int(p[0]), int(p[1]))
+            for p, c in zip(axis_points[1:], colors[:3]):
+                p = (int(p[0]), int(p[1]))
 
-                    # Sometimes qr detector will make a mistake and projected point will overflow integer value. We skip these cases.
-                    if origin[0] > 5*img.shape[1] or origin[1] > 5*img.shape[1]:break
-                    if p[0] > 5*img.shape[1] or p[1] > 5*img.shape[1]:break
+                # Sometimes qr detector will make a mistake and projected point will overflow integer value. We skip these cases.
+                if origin[0] > 5*img.shape[1] or origin[1] > 5*img.shape[1]:break
+                if p[0] > 5*img.shape[1] or p[1] > 5*img.shape[1]:break
 
-                    cv.line(img, origin, p, c, 5)
+                cv.line(img, origin, p, c, 5)
 
         cv.imshow('frame', img)
 
-        k = cv.waitKey(20)
-        if k == 27: break #27 is ESC key.
+        #k = cv.waitKey(20)
+        #if k == 27: break #27 is ESC key.
 
-    cap.release()
-    cv.destroyAllWindows()
+    #cap.release()
+    #cv.destroyAllWindows()
 
 if __name__ == '__main__':
 
@@ -105,10 +105,10 @@ if __name__ == '__main__':
             print("!!! Couldn't read frame!")
             break
 
-        show_axes(cmtx, dist, cap)
+        show_axes(cmtx, dist, current_frame)
 
         # if the `q` key was pressed, break from the loop
-        key = cv.waitKey(30)
+        key = cv.waitKey(1) & 0xFF
         if key == ord("q"):
             break
 
