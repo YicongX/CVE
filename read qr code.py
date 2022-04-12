@@ -1,6 +1,8 @@
 import cv2 as cv
 import numpy as np
 from math import degrees as dg
+from scipy.spatial.transform import Rotation as R
+from sympy import degree
 
 
 def read_camera_parameters(filepath = 'intrinsicParameters/'):
@@ -24,6 +26,9 @@ def get_qr_coords(cmtx, dist, points):
     rotationMatrix = cv.Rodrigues(rvec)[0]
     homoMatrix = np.hstack((rotationMatrix, tvec))
     homoMatrix = np.vstack((homoMatrix, np.array([0, 0, 0, 1])))
+    rotvec = np.squeeze(rvec)
+    r = R.from_rotvec(rotvec)
+    euler = r.as_euler('zxy', degrees=True)
 
     roll = dg(rvec[0][0])
     yaw = dg(rvec[1][0])
@@ -34,10 +39,12 @@ def get_qr_coords(cmtx, dist, points):
     unitv_points = np.array([[0,0,0], [1,0,0], [0,1,0], [0,0,1]], dtype = 'float32').reshape((4,1,3))
     if ret:
         points, jac = cv.projectPoints(unitv_points, rvec, tvec, cmtx, dist)
-        # print(pose)
-        # print(rotationMatrix)
-        print(homoMatrix)
-        print("\n")
+        
+        print("Homogeneous Transformation Matrix:")
+        print(homoMatrix, '\n')
+        print("Euler Angles:")
+        print(euler, '\n')
+        
         return points, rvec, tvec, pose, homoMatrix
 
     # return empty arrays if rotation and translation values not found
