@@ -108,7 +108,7 @@ if __name__ == '__main__':
     # tvec = output translation vector
     # rMatrix = rotation matrix
     # homoMatrix = homogenous matrix
-    # pose = roll yaw pitch in deg
+    # rpy = roll yaw pitch in deg
     # cv.projectPoints
     # points = Output array of image points
     # jac = Jacobian
