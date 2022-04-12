@@ -3,10 +3,10 @@ import numpy as np
 import sys
 from math import degrees as dg
 
-def read_camera_parameters(filepath = '/'):
+def read_camera_parameters(filepath = 'intrinsicParameters/'):
     
-    cmtx = np.loadtxt(directory + 'oneEyeCameraMatrixPix.txt')
-    dist = np.loadtxt(directory + 'oneEyeCameraDistortionPix.txt')
+    cmtx = np.loadtxt(filepath + 'oneEyeCameraMatrixPix.txt')
+    dist = np.loadtxt(filepath + 'oneEyeCameraDistortionPix.txt')
 
     return cmtx, dist
 
