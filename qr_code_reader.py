@@ -79,13 +79,13 @@ if __name__ == '__main__':
     cam = 1 # 1 for external webcam, 0 for internal cam
     cap = cv.VideoCapture(cam)
     if not cap:
-        print("!!! Failed VideoCapture: invalid parameter!")
+        print("!!!Failed VideoCapture: invalid parameter!!!")
 
     while(True):
         # capture frame-by-frame
         ret, current_frame = cap.read()
         if type(current_frame) == type(None):
-            print("!!! Couldn't read frame!")
+            print("!!!Couldn't read frame!!!")
             break
 
         show_axes(cmtx, dist, current_frame)
