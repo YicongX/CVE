@@ -1,8 +1,7 @@
 import cv2 as cv
 import numpy as np
-import sys
 from math import degrees as dg
-from imutils.video import VideoStream
+
 
 def read_camera_parameters(filepath = 'intrinsicParameters/'):
     
