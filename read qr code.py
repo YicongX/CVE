@@ -46,14 +46,8 @@ def get_qr_coords(cmtx, dist, points):
 
 
 def show_axes(cmtx, dist, img):
-    #cap = cv.VideoCapture(in_source)
 
     qr = cv.QRCodeDetector()
-
-    #while True:
-    #    ret, img = cap.read()
-    #    if ret == False: break
-
     ret_qr, points = qr.detect(img)
 
     if ret_qr:
@@ -78,22 +72,15 @@ def show_axes(cmtx, dist, img):
 
                 cv.line(img, origin, p, c, 5)
 
-        cv.imshow('frame', img)
+    cv.imshow('frame', img)
 
-        #k = cv.waitKey(20)
-        #if k == 27: break #27 is ESC key.
-
-    #cap.release()
-    #cv.destroyAllWindows()
 
 if __name__ == '__main__':
 
     # read camera intrinsic parameters.
     cmtx, dist = read_camera_parameters()
 
-    #if len(sys.argv) > 1:
-    #    input_source = int(sys.argv[1])
-    cam = 1
+    cam = 1 # 1 for external webcam, 0 for internal cam
     cap = cv.VideoCapture(cam)
     if not cap:
         print("!!! Failed VideoCapture: invalid parameter!")
