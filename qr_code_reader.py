@@ -79,7 +79,7 @@ if __name__ == '__main__':
     cam = 1 # 1 for external webcam, 0 for internal cam
     cap = cv.VideoCapture(cam)
     if not cap:
-        print("!!!Failed VideoCapture: invalid parameter!!!")
+        print("!!!Failed VideoCapture: invalid camera source!!!")
 
     while(True):
         # capture frame-by-frame
