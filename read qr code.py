@@ -2,6 +2,7 @@ import cv2 as cv
 import numpy as np
 import sys
 from math import degrees as dg
+from imutils.video import VideoStream
 
 def read_camera_parameters(filepath = 'intrinsicParameters/'):
     
@@ -37,15 +38,15 @@ def get_qr_coords(cmtx, dist, points):
         # print(pose)
         # print(rotationMatrix)
         print(homoMatrix)
-        print("break")
+        print("\n")
         return points, rvec, tvec, pose, homoMatrix
 
     # return empty arrays if rotation and translation values not found
     else: return [], [], []
 
 
-def show_axes(cmtx, dist, in_source):
-    cap = cv.VideoCapture(in_source)
+def show_axes(cmtx, dist, cap):
+    #cap = cv.VideoCapture(in_source)
 
     qr = cv.QRCodeDetector()
 
@@ -90,12 +91,30 @@ if __name__ == '__main__':
     # read camera intrinsic parameters.
     cmtx, dist = read_camera_parameters()
 
-    input_source = 'test.mp4'
-    if len(sys.argv) > 1:
-        input_source = int(sys.argv[1])
+    #if len(sys.argv) > 1:
+    #    input_source = int(sys.argv[1])
+    cam = 1
+    cap = cv.VideoCapture(cam)
+    if not cap:
+        print("!!! Failed VideoCapture: invalid parameter!")
 
-    show_axes(cmtx, dist, input_source)
-    cv.waitKey(0)
+    while(True):
+        # Capture frame-by-frame
+        ret, current_frame = cap.read()
+        if type(current_frame) == type(None):
+            print("!!! Couldn't read frame!")
+            break
+
+        show_axes(cmtx, dist, cap)
+
+        # if the `q` key was pressed, break from the loop
+        key = cv.waitKey(30)
+        if key == ord("q"):
+            break
+
+    # release the capture
+    cap.release()
+    cv.destroyAllWindows()
 
     # Notes:
     # cmtx = camera matrix
