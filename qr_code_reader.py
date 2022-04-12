@@ -56,7 +56,6 @@ def show_axes(cmtx, dist, img):
         # check axes points are projected to camera view.
         if len(axis_points) > 0:
             axis_points = axis_points.reshape((4,2))
-
             origin = (int(axis_points[0][0]),int(axis_points[0][1]) )
 
             for p, c in zip(axis_points[1:], colors[:3]):
