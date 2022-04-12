@@ -1,20 +1,16 @@
+import math
 import cv2 as cv
 import numpy as np
-from math import degrees as dg
 from scipy.spatial.transform import Rotation as R
-from sympy import degree
-
+import transforms3d.euler as eul
 
 def read_camera_parameters(filepath = 'intrinsicParameters/'):
-    
     cmtx = np.loadtxt(filepath + 'oneEyeCameraMatrixPix.txt')
     dist = np.loadtxt(filepath + 'oneEyeCameraDistortionPix.txt')
-
     return cmtx, dist
 
 
 def get_qr_coords(cmtx, dist, points):
-
     # Selected coordinate points for each corner of QR code.
     qr_edges = np.array([[0,0,0],
                          [0,1,0],
@@ -26,14 +22,8 @@ def get_qr_coords(cmtx, dist, points):
     rotationMatrix = cv.Rodrigues(rvec)[0]
     homoMatrix = np.hstack((rotationMatrix, tvec))
     homoMatrix = np.vstack((homoMatrix, np.array([0, 0, 0, 1])))
-    rotvec = np.squeeze(rvec)
-    r = R.from_rotvec(rotvec)
-    euler = r.as_euler('zxy', degrees=True)
-
-    roll = dg(rvec[0][0])
-    yaw = dg(rvec[1][0])
-    pitch = dg(rvec[2][0])
-    pose = [roll, yaw, pitch] # Roll: red, Yaw: blue, Pitch: green
+    euler = np.degrees(eul.mat2euler(rotationMatrix, axes='sxyz')) # xyz-euler angles
+    rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy')) # zxy-roll, pitch & yaw
 
     # Define unit xyz axes. These are then projected to camera view using the rotation matrix and translation vector.
     unitv_points = np.array([[0,0,0], [1,0,0], [0,1,0], [0,0,1]], dtype = 'float32').reshape((4,1,3))
@@ -44,11 +34,13 @@ def get_qr_coords(cmtx, dist, points):
         print(homoMatrix, '\n')
         print("Euler Angles:")
         print(euler, '\n')
+        print("[Roll, Pitch, Yaw]:")
+        print(rpy, '\n')
         
-        return points, rvec, tvec, pose, homoMatrix
+        return points, rvec, tvec, euler, homoMatrix
 
     # return empty arrays if rotation and translation values not found
-    else: return [], [], []
+    else: return [], [], [], [], []
 
 
 def show_axes(cmtx, dist, img):
@@ -57,8 +49,8 @@ def show_axes(cmtx, dist, img):
     ret_qr, points = qr.detect(img)
 
     if ret_qr:
+        # axis point projects 3D coordinate points to a 2D plane
         axis_points, rvec, tvec, pose, homoMatrix = get_qr_coords(cmtx, dist, points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
-        # axis point = coordinate 3D point project to 2D plane
 
         # BGR color format
         colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0,0,0)]
@@ -92,7 +84,7 @@ if __name__ == '__main__':
         print("!!! Failed VideoCapture: invalid parameter!")
 
     while(True):
-        # Capture frame-by-frame
+        # capture frame-by-frame
         ret, current_frame = cap.read()
         if type(current_frame) == type(None):
             print("!!! Couldn't read frame!")
