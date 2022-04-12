@@ -3,28 +3,12 @@ import numpy as np
 import sys
 from math import degrees as dg
 
-def read_camera_parameters(filepath = 'intrinsic.dat'):
+def read_camera_parameters(filepath = '/'):
+    
+    cmtx = np.loadtxt(directory + 'oneEyeCameraMatrixPix.txt')
+    dist = np.loadtxt(directory + 'oneEyeCameraDistortionPix.txt')
 
-    inf = open(filepath, 'r')
-
-    cmtx = []
-    dist = []
-
-    # ignore first line
-    line = inf.readline()
-    for _ in range(3):
-        line = inf.readline().split()
-        line = [float(en) for en in line]
-        cmtx.append(line)
-
-    # ignore line that says "distortion"
-    line = inf.readline()
-    line = inf.readline().split()
-    line = [float(en) for en in line]
-    dist.append(line)
-
-    # cmtx = camera matrix, dist = distortion parameters
-    return np.array(cmtx), np.array(dist)
+    return cmtx, dist
 
 
 def get_qr_coords(cmtx, dist, points):
