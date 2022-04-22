@@ -24,6 +24,8 @@ def get_qr_coords(cmtx, dist, points):
     euler = np.degrees(eul.mat2euler(rotationMatrix, axes='sxyz')) # xyz-euler angles
     rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy')) # zxy-roll, pitch & yaw
 
+    camPos = -np.matrix(rotationMatrix).T * np.matrix(tvec)
+
     # Define unit xyz axes. These are then projected to camera view using the rotation matrix and translation vector.
     unitv_points = np.array([[0,0,0], [1,0,0], [0,1,0], [0,0,1]], dtype = 'float32').reshape((4,1,3)) * w
     if ret:
@@ -35,7 +37,8 @@ def get_qr_coords(cmtx, dist, points):
         print(euler, '\n')
         print("[Yaw, Pitch, Roll]:")
         print(rpy, '\n')
-        
+        print("Camera Position:")
+        print(camPos, '\n')
         return points
 
     # return empty arrays if rotation and translation values not found
