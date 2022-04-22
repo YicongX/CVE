@@ -10,10 +10,11 @@ def read_camera_parameters(filepath = 'intrinsicParameters/'):
 
 def get_qr_coords(cmtx, dist, points):
     # Selected coordinate points for each corner of QR code.
+    w = 57.15
     qr_edges = np.array([[0,0,0],
                          [0,1,0],
                          [1,1,0],
-                         [1,0,0]], dtype = 'float32').reshape((4,1,3))
+                         [1,0,0]], dtype = 'float32').reshape((4,1,3)) * w
 
     # determine the orientation of QR code coordinate system with respect to camera coorindate system.
     ret, rvec, tvec = cv.solvePnP(qr_edges, points, cmtx, dist) # estimate the orientation of a 3D object in a 2D image.
@@ -24,7 +25,7 @@ def get_qr_coords(cmtx, dist, points):
     rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy')) # zxy-roll, pitch & yaw
 
     # Define unit xyz axes. These are then projected to camera view using the rotation matrix and translation vector.
-    unitv_points = np.array([[0,0,0], [1,0,0], [0,1,0], [0,0,1]], dtype = 'float32').reshape((4,1,3))
+    unitv_points = np.array([[0,0,0], [1,0,0], [0,1,0], [0,0,1]], dtype = 'float32').reshape((4,1,3)) * w
     if ret:
         points, jac = cv.projectPoints(unitv_points, rvec, tvec, cmtx, dist)
         
@@ -32,7 +33,7 @@ def get_qr_coords(cmtx, dist, points):
         print(homoMatrix, '\n')
         print("Euler Angles:")
         print(euler, '\n')
-        print("[Roll, Pitch, Yaw]:")
+        print("[Yaw, Pitch, Roll]:")
         print(rpy, '\n')
         
         return points
@@ -75,7 +76,7 @@ if __name__ == '__main__':
     # read camera intrinsic parameters.
     cmtx, dist = read_camera_parameters()
 
-    cam = 1 # 1 for external webcam, 0 for internal cam
+    cam = 0 # 1 for external webcam, 0 for internal cam
     cap = cv.VideoCapture(cam)
     if not cap: print("!!!Failed VideoCapture: invalid camera source!!!")
 
