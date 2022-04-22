@@ -5,7 +5,8 @@
 # publisher: pub_qr_code_cose
 
 import rospy
-from sensor_msgs.msg import Image
+from rospy.numpy_msg import numpy_msg
+from rospy_tutorials.msg import Floats
 import cv2 as cv
 import numpy as np
 import transforms3d.euler as eul
@@ -33,7 +34,7 @@ def get_qr_coords(cmtx, dist, points):
     rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy')) # zxy-roll, pitch & yaw
 
     # ceate a "qr_code_pose" topic and publisher
-    pub_qr_code_pose = rospy.Publisher('/qr_code_pose', Image, queue_size=1)
+    pub_qr_code_pose = rospy.Publisher('/qr_code_pose', numpy_msg(Floats), queue_size=1) # not sure for queue size
     
     # publish euler angle in the "qr_code_pose" topic
     pub_qr_code_pose.publish(euler)
@@ -63,7 +64,7 @@ def show_axes(cmtx, dist, img):
 
     if ret_qr:
         # axis point projects 3D coordinate points to a 2D plane
-        axis_points = get_qr_coords(cmtx, dist, points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
+        axis_points = get_qr_coords(cmtx, dist, points)  # Output vector of vertices of the minimum-area quadrangle containing the code.
 
         # BGR color format
         colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0,0,0)]
@@ -86,7 +87,6 @@ def show_axes(cmtx, dist, img):
 
 
 def main():
-
     # read camera intrinsic parameters.
     cmtx, dist = read_camera_parameters()
 
