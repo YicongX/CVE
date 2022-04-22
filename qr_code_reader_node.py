@@ -19,7 +19,7 @@ def read_camera_parameters(filepath = 'intrinsicParameters/'):
 
 
 def get_qr_coords(cmtx, dist, points):
-    w = 57.15
+    w = 4.655 # change to qr code physical size
     # Selected coordinate points for each corner of QR code.
     qr_edges = np.array([[0,0,0],
                          [0,1,0],
@@ -33,12 +33,13 @@ def get_qr_coords(cmtx, dist, points):
     homoMatrix = np.vstack((homoMatrix, np.array([0, 0, 0, 1])))
     euler = np.degrees(eul.mat2euler(rotationMatrix, axes='sxyz')) # xyz-euler angles
     rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy')) # zxy-roll, pitch & yaw
+    camPosition = -np.matrix(rotationMatrix).T * np.matrix(tvec)
 
     # ceate a "qr_code_pose" topic and publisher
     pub_qr_code_pose = rospy.Publisher('/qr_code_pose', numpy_msg(Floats), queue_size=1) # not sure for queue size
     
     # publish rotation matrix in the "qr_code_pose" topic
-    pub_qr_code_pose.publish(rotationMatrix)
+    pub_qr_code_pose.publish(camPosition)
 
     # Define unit xyz axes. These are then projected to camera view using the rotation matrix and translation vector.
     unitv_points = np.array([[0,0,0], [1,0,0], [0,1,0], [0,0,1]], dtype = 'float32').reshape((4,1,3)) * w
@@ -47,10 +48,12 @@ def get_qr_coords(cmtx, dist, points):
         
         print("Homogeneous Transformation Matrix:")
         print(homoMatrix, '\n')
-        print("Euler Angles:")
-        print(euler, '\n')
-        print("[Yaw, Pitch, Roll]:")
-        print(rpy, '\n')
+        #print("Euler Angles:")
+        #print(euler, '\n')
+        #print("[Yaw, Pitch, Roll]:")
+        #print(rpy, '\n')
+        print("Camera Position:")
+        print(camPosition, '\n')
         
         return points
 
