@@ -12,19 +12,11 @@ def read_camera_parameters(filepath='intrinsicParameters/'):
 
 def get_qr_coords(cmtx, dist, points):
     # Selected coordinate points for each corner of QR code.
-<<<<<<< HEAD
-    w = 5.75
-    qr_edges = np.array([[0, 0, 0],
-                         [0, 1, 0],
-                         [1, 1, 0],
-                         [1, 0, 0]], dtype='float32').reshape((4, 1, 3)) * w
-=======
-    w = 4.65
+    w = 3.65
     qr_edges = np.array([[0,0,0],
                          [0,1,0],
                          [1,1,0],
                          [1,0,0]], dtype = 'float32').reshape((4,1,3)) * w
->>>>>>> fe0d3fb785920153401eaabdc66ea38f82cb3b7a
 
     # determine the orientation of QR code coordinate system with respect to camera coorindate system.
     ret, rvec, tvec = cv.solvePnP(qr_edges, points, cmtx,
@@ -110,11 +102,7 @@ if __name__ == '__main__':
     # read camera intrinsic parameters.
     cmtx, dist = read_camera_parameters()
 
-<<<<<<< HEAD
-    cam = 1  # 1 for external webcam, 0 for internal cam
-=======
     cam = 1 # 1 for external webcam, 0 for internal cam
->>>>>>> fe0d3fb785920153401eaabdc66ea38f82cb3b7a
     cap = cv.VideoCapture(cam)
     if not cap: print("!!!Failed VideoCapture: invalid camera source!!!")
 
