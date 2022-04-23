@@ -1,9 +1,10 @@
 import cv2 as cv
 import numpy as np
 import transforms3d.euler as eul
+from pyzbar.pyzbar import decode
 
 
-def read_camera_parameters(filepath = 'intrinsicParameters/'):
+def read_camera_parameters(filepath='intrinsicParameters/'):
     cmtx = np.loadtxt(filepath + 'oneEyeCameraMatrixPix.txt')
     dist = np.loadtxt(filepath + 'oneEyeCameraDistortionPix.txt')
     return cmtx, dist
@@ -11,26 +12,27 @@ def read_camera_parameters(filepath = 'intrinsicParameters/'):
 
 def get_qr_coords(cmtx, dist, points):
     # Selected coordinate points for each corner of QR code.
-    w = 4.655
-    qr_edges = np.array([[0,0,0],
-                         [0,1,0],
-                         [1,1,0],
-                         [1,0,0]], dtype = 'float32').reshape((4,1,3)) * w
+    w = 5.75
+    qr_edges = np.array([[0, 0, 0],
+                         [0, 1, 0],
+                         [1, 1, 0],
+                         [1, 0, 0]], dtype='float32').reshape((4, 1, 3)) * w
 
     # determine the orientation of QR code coordinate system with respect to camera coorindate system.
-    ret, rvec, tvec = cv.solvePnP(qr_edges, points, cmtx, dist) # estimate the orientation of a 3D object in a 2D image.
+    ret, rvec, tvec = cv.solvePnP(qr_edges, points, cmtx,
+                                  dist)  # estimate the orientation of a 3D object in a 2D image.
     rotationMatrix = cv.Rodrigues(rvec)[0]
     homoMatrix = np.hstack((rotationMatrix, tvec))
     homoMatrix = np.vstack((homoMatrix, np.array([0, 0, 0, 1])))
-    euler = np.degrees(eul.mat2euler(rotationMatrix, axes='sxyz')) # xyz-euler angles
-    rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy')) # zxy-roll, pitch & yaw
+    euler = np.degrees(eul.mat2euler(rotationMatrix, axes='sxyz'))  # xyz-euler angles
+    rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy'))  # zxy-roll, pitch & yaw
     camPosition = -np.matrix(rotationMatrix).T * np.matrix(tvec)
 
     # Define unit xyz axes. These are then projected to camera view using the rotation matrix and translation vector.
-    unitv_points = np.array([[0,0,0], [1,0,0], [0,1,0], [0,0,1]], dtype = 'float32').reshape((4,1,3)) * w
+    unitv_points = np.array([[0, 0, 0], [1, 0, 0], [0, 1, 0], [0, 0, 1]], dtype='float32').reshape((4, 1, 3)) * w
     if ret:
         points, jac = cv.projectPoints(unitv_points, rvec, tvec, cmtx, dist)
-        
+
         print("Homogeneous Transformation Matrix:")
         print(homoMatrix, '\n')
         print("Euler Angles:")
@@ -42,32 +44,53 @@ def get_qr_coords(cmtx, dist, points):
         return points
 
     # return empty arrays if rotation and translation values not found
-    else: return []
+    else:
+        return []
+
+
+def detectQR(img):
+    # initialize the cv2 QRCode detector
+    ret_qr = not len(decode(img)) == 0
+    if not ret_qr:
+        pts = None
+    else:
+        for qr in decode(img):
+            # data = qr.data.decode('utf-8')
+            # print(data)
+            pts = np.array([qr.polygon], np.float32)
+            # print(np.shape(pts))
+            # pts_rs = pts.copy()
+            # pts_rs.reshape(-1, 1, 2)
+            # cv.polylines(img, [pts_rs], True, color=(255, 0, 0), thickness=2)
+    return ret_qr, pts
 
 
 def show_axes(cmtx, dist, img):
+    # previous Opencv
+    # qr = cv.QRCodeDetector()
+    # ret_qr, points = qr.detect(img)
 
-    qr = cv.QRCodeDetector()
-    ret_qr, points = qr.detect(img)
+    ret_qr, points = detectQR(img)
 
     if ret_qr:
         # axis point projects 3D coordinate points to a 2D plane
-        axis_points = get_qr_coords(cmtx, dist, points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
+        axis_points = get_qr_coords(cmtx, dist,
+                                    points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
 
         # BGR color format
-        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0,0,0)]
+        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0, 0, 0)]
 
         # check axes points are projected to camera view.
         if len(axis_points) > 0:
-            axis_points = axis_points.reshape((4,2))
-            origin = (int(axis_points[0][0]),int(axis_points[0][1]) )
+            axis_points = axis_points.reshape((4, 2))
+            origin = (int(axis_points[0][0]), int(axis_points[0][1]))
 
             for p, c in zip(axis_points[1:], colors[:3]):
                 p = (int(p[0]), int(p[1]))
 
                 # Sometimes qr detector will make a mistake and projected point will overflow integer value. We skip these cases.
-                if origin[0] > 5*img.shape[1] or origin[1] > 5*img.shape[1]:break
-                if p[0] > 5*img.shape[1] or p[1] > 5*img.shape[1]:break
+                if origin[0] > 5 * img.shape[1] or origin[1] > 5 * img.shape[1]: break
+                if p[0] > 5 * img.shape[1] or p[1] > 5 * img.shape[1]: break
 
                 cv.line(img, origin, p, c, 5)
 
@@ -79,11 +102,11 @@ if __name__ == '__main__':
     # read camera intrinsic parameters.
     cmtx, dist = read_camera_parameters()
 
-    cam = 0 # 1 for external webcam, 0 for internal cam
+    cam = 1  # 1 for external webcam, 0 for internal cam
     cap = cv.VideoCapture(cam)
     if not cap: print("!!!Failed VideoCapture: invalid camera source!!!")
 
-    while(True):
+    while (True):
         # capture frame-by-frame
         ret, current_frame = cap.read()
         if type(current_frame) == type(None):
