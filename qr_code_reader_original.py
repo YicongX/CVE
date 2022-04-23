@@ -11,7 +11,7 @@ def read_camera_parameters(filepath = 'intrinsicParameters/'):
 
 def get_qr_coords(cmtx, dist, points):
     # Selected coordinate points for each corner of QR code.
-    w = 4.65
+    w = 3.65
     qr_edges = np.array([[0,0,0],
                          [0,1,0],
                          [1,1,0],
