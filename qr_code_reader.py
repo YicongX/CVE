@@ -11,7 +11,7 @@ def read_camera_parameters(filepath = 'intrinsicParameters/'):
 
 def get_qr_coords(cmtx, dist, points):
     # Selected coordinate points for each corner of QR code.
-    w = 4.655
+    w = 4.65
     qr_edges = np.array([[0,0,0],
                          [0,1,0],
                          [1,1,0],
@@ -33,10 +33,10 @@ def get_qr_coords(cmtx, dist, points):
         
         print("Homogeneous Transformation Matrix:")
         print(homoMatrix, '\n')
-        print("Euler Angles:")
-        print(euler, '\n')
-        print("[Yaw, Pitch, Roll]:")
-        print(rpy, '\n')
+        #print("Euler Angles:")
+        #print(euler, '\n')
+        #print("[Yaw, Pitch, Roll]:")
+        #print(rpy, '\n')
         print("Camera Position:")
         print(camPosition, '\n')
         return points
@@ -79,7 +79,7 @@ if __name__ == '__main__':
     # read camera intrinsic parameters.
     cmtx, dist = read_camera_parameters()
 
-    cam = 0 # 1 for external webcam, 0 for internal cam
+    cam = 1 # 1 for external webcam, 0 for internal cam
     cap = cv.VideoCapture(cam)
     if not cap: print("!!!Failed VideoCapture: invalid camera source!!!")
 
