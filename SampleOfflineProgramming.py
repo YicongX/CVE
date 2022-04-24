@@ -5,6 +5,7 @@ from robodk import *      # robodk robotics toolbox
 import cv2 as cv
 import numpy as np
 import transforms3d.euler as eul
+import time
 
 def read_camera_parameters(filepath = 'C:/Users/shaob/Desktop/CVE/intrinsicParameters/'):
     cmtx = np.loadtxt(filepath + 'oneEyeCameraMatrixPix.txt')
@@ -14,7 +15,7 @@ def read_camera_parameters(filepath = 'C:/Users/shaob/Desktop/CVE/intrinsicParam
 
 def get_qr_coords(cmtx, dist, points):
     # Selected coordinate points for each corner of QR code.
-    w = 3.65
+    w = 50
     qr_edges = np.array([[0,0,0],
                          [0,1,0],
                          [1,1,0],
@@ -25,24 +26,28 @@ def get_qr_coords(cmtx, dist, points):
     rotationMatrix = cv.Rodrigues(rvec)[0]
     homoMatrix = np.hstack((rotationMatrix, tvec))
     homoMatrix = np.vstack((homoMatrix, np.array([0, 0, 0, 1])))
-    euler = np.degrees(eul.mat2euler(rotationMatrix, axes='sxyz')) # xyz-euler angles
-    rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy')) # zxy-roll, pitch & yaw
+    # euler = np.degrees(eul.mat2euler(rotationMatrix, axes='sxyz')) # xyz-euler angles
+    rpy = eul.mat2euler(-np.matrix(rotationMatrix).T, axes='szxy') # zxy-roll, pitch & yaw
+    rpy = np.flip(rpy)
     camPosition = -np.matrix(rotationMatrix).T * np.matrix(tvec)
+    camPosition = np.ndarray.tolist(camPosition.reshape(3,))[0]
+    rpy = np.ndarray.tolist(np.squeeze(rpy))
+    pose = camPosition+rpy
 
     # Define unit xyz axes. These are then projected to camera view using the rotation matrix and translation vector.
     unitv_points = np.array([[0,0,0], [1,0,0], [0,1,0], [0,0,1]], dtype = 'float32').reshape((4,1,3)) * w
     if ret:
         points, jac = cv.projectPoints(unitv_points, rvec, tvec, cmtx, dist)
         
-        print("Homogeneous Transformation Matrix:")
-        print(homoMatrix, '\n')
+        # print("Homogeneous Transformation Matrix:")
+        # print(homoMatrix, '\n')
         #print("Euler Angles:")
         #print(euler, '\n')
         #print("[Yaw, Pitch, Roll]:")
         #print(rpy, '\n')
         # print("Camera Position:")
         # print(camPosition, '\n')
-        return points, np.linalg.inv(homoMatrix)
+        return points, pose
 
     # return empty arrays if rotation and translation values not found
     else: return []
@@ -58,7 +63,7 @@ def show_axes(cmtx, dist, img):
         axis_points, objPose = get_qr_coords(cmtx, dist, points)  # points	Output vector of vertices of the minimum-area quadrangle containing the code.
 
         # BGR color format
-        colors = [(255, 0, 0), (0, 255, 0), (0, 0, 255), (0,0,0)]
+        colors = [(0, 0, 255), (0, 255, 0), (255, 0, 0), (0,0,0)]
 
         # check axes points are projected to camera view.
         if len(axis_points) > 0:
@@ -73,9 +78,10 @@ def show_axes(cmtx, dist, img):
                 if p[0] > 5*img.shape[1] or p[1] > 5*img.shape[1]:break
 
                 cv.line(img, origin, p, c, 5)
+        cv.imshow('frame', img)
         return objPose
     else:
-        cv.imshow('frame', img)
+        # cv.imshow('frame', img)
         return []
 
     
@@ -93,8 +99,14 @@ if not robot.Valid():
 # (4x4 matrix representing position and orientation)
 target_ref = robot.Pose()
 pos_ref = target_ref.Pos()
-print("Drawing a polygon around the target: ")
-print(Pose_2_TxyzRxyz(target_ref))
+target_last = target_ref
+target_init = Mat.eye(4).__mul__(roty(-90))
+pos_init= target_init.Pos()
+pos_init[2] += 500
+target_init.setPos(pos_init)
+
+# print("Drawing a polygon around the target: ")
+# print(Pose_2_TxyzRxyz(target_ref))
 
 
 # move the robot to the first point:
@@ -106,35 +118,35 @@ robot.setPoseTool(robot.PoseTool())
 robot.setZoneData(10) # Set the rounding parameter (Also known as: CNT, APO/C_DIS, ZoneData, Blending radius, cornering, ...)
 robot.setSpeed(200) # Set linear speed in mm/s
 
-# Set the number of sides of the polygon:
-n_sides = 6
-R = 100
+# # Set the number of sides of the polygon:
+# n_sides = 6
+# R = 100
 
-# make a hexagon around reference target:
-for i in range(n_sides+1):
-    ang = i*2*pi/n_sides #angle: 0, 60, 120, ...
+# # make a hexagon around reference target:
+# for i in range(n_sides+1):
+#     ang = i*2*pi/n_sides #angle: 0, 60, 120, ...
 
-    #-----------------------------
-    # Movement relative to the reference frame
-    # Create a copy of the target
-    target_i = Mat(target_ref)
-    pos_i = target_i.Pos()
-    pos_i[0] = pos_i[0] + R*cos(ang)
-    pos_i[1] = pos_i[1] + R*sin(ang)
-    target_i.setPos(pos_i)
-    print("Moving to target %i: angle %.1f" % (i, ang*180/pi))
-    print(str(Pose_2_TxyzRxyz(target_i)))
-    robot.MoveL(target_i)
+#     #-----------------------------
+#     # Movement relative to the reference frame
+#     # Create a copy of the target
+#     target_i = Mat(target_ref)
+#     pos_i = target_i.Pos()
+#     pos_i[0] = pos_i[0] + R*cos(ang)
+#     pos_i[1] = pos_i[1] + R*sin(ang)
+#     target_i.setPos(pos_i)
+#     print("Moving to target %i: angle %.1f" % (i, ang*180/pi))
+#     print(str(Pose_2_TxyzRxyz(target_i)))
+#     robot.MoveL(target_i)
     
-    #-----------------------------
-    # Post multiply: relative to the tool
-    #target_i = target_ref * rotz(ang) * transl(R,0,0) * rotz(-ang)
-    #robot.MoveL(target_i)
+#     #-----------------------------
+#     # Post multiply: relative to the tool
+#     #target_i = target_ref * rotz(ang) * transl(R,0,0) * rotz(-ang)
+#     #robot.MoveL(target_i)
 
-# move back to the center, then home:
-robot.MoveL(target_ref)
+# # move back to the center, then home:
+# robot.MoveL(target_ref)
 
-print('Done')
+# print('Done')
 
 
 if __name__ == '__main__':
@@ -142,7 +154,7 @@ if __name__ == '__main__':
     # read camera intrinsic parameters.
     cmtx, dist = read_camera_parameters()
 
-    cam = 0 # 1 for external webcam, 0 for internal cam
+    cam = 1 # 1 for external webcam, 0 for internal cam
     cap = cv.VideoCapture(cam)
     if not cap: print("!!!Failed VideoCapture: invalid camera source!!!")
 
@@ -155,12 +167,29 @@ if __name__ == '__main__':
 
         QR_pose = show_axes(cmtx, dist, current_frame)
         # print(QR_pose)
-        print(type(target_ref))
+        if len(QR_pose) is not 0:
+            QR_pose = TxyzRxyz_2_Pose(QR_pose)
+            target_QR = target_init.__mul__(QR_pose)
+            try:
+                diff = np.zeros(3)
+                last = Pose_2_TxyzRxyz(target_last)
+                tar = Pose_2_TxyzRxyz(target_QR)
+                diff[0] = tar[3]-last[3]
+                diff[1] = tar[4]-last[4]
+                diff[2] = tar[5]-last[5]   
+                print(max(np.abs(diff)))            
+                if(max(np.abs(diff))<8):
+                    robot.MoveL(target_QR)
+                    target_last = Mat(target_QR)
+            except:
+                print("out of range")
 
+        time.sleep(0.2)
         # if the `q` key was pressed, break from the loop
-        key = cv.waitKey(1) & 0xFF
+        key = cv.waitKey(10) & 0xFF
         if key == ord("q"): break
 
+    robot.MoveJ(target_ref)
     # release the capture
     cap.release()
     cv.destroyAllWindows()

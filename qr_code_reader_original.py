@@ -1,6 +1,7 @@
 import cv2 as cv
 import numpy as np
 import transforms3d.euler as eul
+import time
 
 
 def read_camera_parameters(filepath = 'intrinsicParameters/'):
@@ -24,6 +25,7 @@ def get_qr_coords(cmtx, dist, points):
     homoMatrix = np.vstack((homoMatrix, np.array([0, 0, 0, 1])))
     euler = np.degrees(eul.mat2euler(rotationMatrix, axes='sxyz')) # xyz-euler angles
     rpy = np.degrees(eul.mat2euler(rotationMatrix, axes='szxy')) # zxy-roll, pitch & yaw
+    rpy = np.flip(rpy)
     camPosition = -np.matrix(rotationMatrix).T * np.matrix(tvec)
 
     # Define unit xyz axes. These are then projected to camera view using the rotation matrix and translation vector.
@@ -31,12 +33,12 @@ def get_qr_coords(cmtx, dist, points):
     if ret:
         points, jac = cv.projectPoints(unitv_points, rvec, tvec, cmtx, dist)
         
-        print("Homogeneous Transformation Matrix:")
-        print(homoMatrix, '\n')
+        # print("Homogeneous Transformation Matrix:")
+        # print(homoMatrix, '\n')
         #print("Euler Angles:")
         #print(euler, '\n')
-        #print("[Yaw, Pitch, Roll]:")
-        #print(rpy, '\n')
+        print("[Yaw, Pitch, Roll]:")
+        print(rpy, '\n')
         print("Camera Position:")
         print(camPosition, '\n')
         return points
@@ -91,7 +93,7 @@ if __name__ == '__main__':
             break
 
         show_axes(cmtx, dist, current_frame)
-
+        time.sleep(0.5)
         # if the `q` key was pressed, break from the loop
         key = cv.waitKey(1) & 0xFF
         if key == ord("q"): break
